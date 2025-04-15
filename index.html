@@ -4,8 +4,128 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GeoQuiz Challenge</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/components/navbar.css" />
+    <link rel="stylesheet" href="css/components/quiz.css" />
+    <link rel="stylesheet" href="css/components/modal.css" />
+    <script src="js/app.js" type="module" defer></script>
   </head>
   <body>
-    <h1>Geo Quiz</h1>
+    <header>
+      <div class="header-container">
+        <nav class="navbar">
+          <div class="logo">
+            <span class="logo-icon">🌎</span>
+            <h1 class="logo-text">GeoQuiz Challenge</h1>
+          </div>
+          <div class="nav-controls">
+            <button
+              id="theme-toggle"
+              class="theme-btn"
+              aria-label="Toggle dark mode"
+            >
+              <span class="light-icon">☀️</span>
+              <span class="dark-icon">🌙</span>
+            </button>
+            <button
+              id="profile-btn"
+              class="profile-btn"
+              aria-label="View profile"
+            >
+              <span class="profile-icon">👤</span>
+              <span class="profile-text">Profile</span>
+            </button>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="welcome-section" id="welcome-section">
+        <h1>Test Your Geography Knowledge</h1>
+        <p>Choose a quiz type to begin your global adventure!</p>
+
+        <div class="quiz-selection">
+          <div class="quiz-card" data-quiz="flag">
+            <div class="quiz-icon">🚩</div>
+            <h2>Flag Challenge</h2>
+            <p>Identify countries by their flags</p>
+          </div>
+
+          <div class="quiz-card" data-quiz="capital">
+            <div class="quiz-icon">🏛️</div>
+            <h2>Capital Cities</h2>
+            <p>Match capitals to their countries</p>
+          </div>
+
+          <div class="quiz-card" data-quiz="size">
+            <div class="quiz-icon">📏</div>
+            <h2>Size Ranking</h2>
+            <p>Arrange countries by land area</p>
+          </div>
+
+          <div class="quiz-card" data-quiz="population">
+            <div class="quiz-icon">👥</div>
+            <h2>Population Quiz</h2>
+            <p>Sort countries by population</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="quiz-container hidden" id="quiz-container">
+        <div class="quiz-header">
+          <h2 id="quiz-title">Quiz Title</h2>
+          <div class="quiz-stats">
+            <div class="score">Score: <span id="current-score">0</span></div>
+            <div class="timer" id="timer">Time: 00:00</div>
+          </div>
+        </div>
+
+        <div class="quiz-content" id="quiz-content">
+          <!-- Quiz content will be dynamically loaded here -->
+        </div>
+
+        <div class="quiz-controls">
+          <button id="hint-btn" class="btn">Get Hint (-1 point)</button>
+          <button id="skip-btn" class="btn">Skip Question</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="profile-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>Your Profile</h2>
+        <div class="stats-container">
+          <div class="stat-card">
+            <h3>Flag Challenge</h3>
+            <p>Best Score: <span id="flag-best">0</span></p>
+            <p>Games Played: <span id="flag-games">0</span></p>
+          </div>
+          <div class="stat-card">
+            <h3>Capital Cities</h3>
+            <p>Best Score: <span id="capital-best">0</span></p>
+            <p>Games Played: <span id="capital-games">0</span></p>
+          </div>
+          <div class="stat-card">
+            <h3>Size Ranking</h3>
+            <p>Best Score: <span id="size-best">0</span></p>
+            <p>Games Played: <span id="size-games">0</span></p>
+          </div>
+          <div class="stat-card">
+            <h3>Population Quiz</h3>
+            <p>Best Score: <span id="population-best">0</span></p>
+            <p>Games Played: <span id="population-games">0</span></p>
+          </div>
+        </div>
+        <button id="reset-stats" class="btn danger">Reset Stats</button>
+      </div>
+    </div>
+
+    <footer>
+      <p>
+        &copy; 2025 GeoQuiz Challenge | <a href="#" id="about-link">About</a>
+      </p>
+    </footer>
   </body>
 </html>
