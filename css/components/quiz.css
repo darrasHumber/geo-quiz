@@ -1,4 +1,4 @@
-/* Button Styles */
+/* ======= BUTTON STYLES ======= */
 .btn {
   background-color: var(--primary-color);
   color: white;
@@ -51,7 +51,28 @@
   background-color: var(--card-hover);
 }
 
-/* Quiz Container Styles */
+.back-btn {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  margin-right: 15px;
+}
+
+.back-btn:hover {
+  background-color: var(--card-hover);
+  transform: translateY(-2px);
+}
+
+#quit-btn {
+  background-color: rgba(231, 76, 60, 0.8);
+}
+
+#quit-btn:hover {
+  background-color: #e74c3c;
+}
+
+/* ======= QUIZ CONTAINER & HEADER ======= */
 .quiz-container {
   background-color: var(--card-background);
   border-radius: 12px;
@@ -93,14 +114,49 @@
   margin-bottom: 25px;
 }
 
-.question-counter {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 1.1rem;
-  color: var(--text-light);
+.quiz-controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 30px;
 }
 
-/* Flag Quiz Specific Styles */
+/* ======= QUESTION STYLES ======= */
+.question-counter {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 1.1rem;
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.question-timer-container {
+  background-color: var(--background-color);
+  padding: 6px 12px;
+  border-radius: 20px;
+  margin-top: 8px;
+  display: inline-block;
+  font-weight: 600;
+}
+
+#question-timer {
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.timer-warning {
+  color: #f39c12;
+}
+
+.timer-critical {
+  color: #e74c3c;
+  animation: pulse 1s infinite;
+}
+
+/* ======= FLAG QUIZ SPECIFIC ======= */
 .flag-question {
   display: flex;
   flex-direction: column;
@@ -120,6 +176,38 @@
   display: block;
 }
 
+/* ======= CAPITAL QUIZ SPECIFIC ======= */
+.capital-question {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 25px;
+}
+
+.capital-container {
+  background-color: var(--card-background);
+  border: 2px solid var(--primary-color);
+  border-radius: 12px;
+  padding: 25px 40px;
+  text-align: center;
+  box-shadow: 0 5px 15px var(--shadow-color);
+  max-width: 500px;
+  width: 100%;
+}
+
+.capital-name {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+  color: var(--primary-color);
+}
+
+.question-text {
+  font-size: 1.1rem;
+  color: var(--text-light);
+  margin-top: 5px;
+}
+
+/* ======= HINTS SECTION ======= */
 .hint-container {
   width: 100%;
   max-width: 500px;
@@ -141,6 +229,7 @@
   font-size: 1.2rem;
 }
 
+/* ======= ANSWER OPTIONS ======= */
 .options-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -175,14 +264,7 @@
   color: var(--incorrect-color);
 }
 
-.quiz-controls {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 30px;
-}
-
-/* Feedback Animation */
+/* ======= FEEDBACK & RESULTS ======= */
 .feedback {
   position: fixed;
   top: 50%;
@@ -208,7 +290,6 @@
   color: white;
 }
 
-/* Quiz results */
 .quiz-results {
   text-align: center;
   padding: 30px;
@@ -229,7 +310,15 @@
   margin-right: 10px;
 }
 
-/* Loading and Error States */
+.result-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+/* ======= LOADING & ERROR STATES ======= */
 .loading,
 .error {
   text-align: center;
@@ -252,64 +341,7 @@
   color: var(--incorrect-color);
 }
 
-/* Quit button styles */
-#quit-btn {
-  background-color: rgba(231, 76, 60, 0.8);
-}
-
-#quit-btn:hover {
-  background-color: #e74c3c;
-}
-
-/* Result buttons container */
-.result-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 25px;
-}
-
-/* Add these to your quiz.css file */
-
-/* Back button */
-.back-btn {
-  background-color: var(--background-color);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  padding: 8px 16px;
-  margin-right: 15px;
-}
-
-.back-btn:hover {
-  background-color: var(--card-hover);
-  transform: translateY(-2px);
-}
-
-/* Question timer */
-.question-timer-container {
-  background-color: var(--background-color);
-  padding: 6px 12px;
-  border-radius: 20px;
-  margin-top: 8px;
-  display: inline-block;
-  font-weight: 600;
-}
-
-#question-timer {
-  font-weight: 700;
-  transition: color 0.3s ease;
-}
-
-.timer-warning {
-  color: #f39c12;
-}
-
-.timer-critical {
-  color: #e74c3c;
-  animation: pulse 1s infinite;
-}
-
+/* ======= ANIMATIONS ======= */
 @keyframes pulse {
   0% {
     opacity: 1;
@@ -322,27 +354,26 @@
   }
 }
 
-/* Improved question counter layout */
-.question-counter {
-  text-align: center;
-  margin-bottom: 25px;
-  font-size: 1.1rem;
-  color: var(--text-light);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-@media (max-width: 768px) {
-  .result-buttons {
-    flex-direction: column;
-    width: 100%;
-    max-width: 300px;
-    margin: 25px auto 0;
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -40%);
   }
 }
 
-/* Responsive Adjustments */
+/* ======= RESPONSIVE ADJUSTMENTS ======= */
 @media (max-width: 768px) {
   .quiz-header {
     flex-direction: column;
@@ -357,5 +388,12 @@
 
   .quiz-controls {
     flex-direction: column;
+  }
+
+  .result-buttons {
+    flex-direction: column;
+    width: 100%;
+    max-width: 300px;
+    margin: 25px auto 0;
   }
 }

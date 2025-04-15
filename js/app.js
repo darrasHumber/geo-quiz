@@ -1,50 +1,62 @@
-// js/app.js
 import FlagQuiz from "./modules/flag-quiz.js";
+import CapitalQuiz from "./modules/capital-quiz.js";
 
 document.addEventListener("DOMContentLoaded", function () {
-  // Elements
   const welcomeSection = document.getElementById("welcome-section");
   const quizContainer = document.getElementById("quiz-container");
   const quizCards = document.querySelectorAll(".quiz-card");
   const themeToggle = document.getElementById("theme-toggle");
   const profileBtn = document.getElementById("profile-btn");
   const profileModal = document.getElementById("profile-modal");
-  const closeBtn = profileModal.querySelector(".close-btn");
+  const settingsModal = document.getElementById("settings-modal");
+  const closeProfileBtn = profileModal.querySelector(".close-btn");
   const resetStatsBtn = document.getElementById("reset-stats");
+  const questionSlider = document.getElementById("question-count-slider");
+  const questionDisplay = document.getElementById("question-count-display");
 
-  // Active quiz instance
   let activeQuiz = null;
 
-  // Initialize theme
   initTheme();
-
-  // Update stats display
   updateStatsDisplay();
 
-  // Add event listeners
+  // Event listeners
   themeToggle.addEventListener("click", toggleTheme);
 
-  // Quiz selection
   quizCards.forEach((card) => {
     card.addEventListener("click", (e) => {
-      const quizType = e.currentTarget.dataset.quiz;
-      startQuiz(quizType);
+      startQuiz(e.currentTarget.dataset.quiz);
     });
   });
 
-  // Profile modal
   profileBtn.addEventListener("click", openProfileModal);
-  closeBtn.addEventListener("click", closeProfileModal);
-  window.addEventListener("click", (e) => {
-    if (e.target === profileModal) {
-      closeProfileModal();
+  closeProfileBtn.addEventListener("click", closeProfileModal);
+
+  if (settingsModal) {
+    const closeSettingsBtn = settingsModal.querySelector(".close-btn");
+    if (closeSettingsBtn) {
+      closeSettingsBtn.addEventListener("click", closeSettingsModal);
     }
+
+    const applySettingsBtn = document.getElementById("apply-settings");
+    if (applySettingsBtn) {
+      applySettingsBtn.addEventListener("click", applySettings);
+    }
+  }
+
+  if (questionSlider && questionDisplay) {
+    questionSlider.addEventListener("input", function () {
+      questionDisplay.textContent = this.value + " Questions";
+    });
+  }
+
+  window.addEventListener("click", (e) => {
+    if (e.target === profileModal) closeProfileModal();
+    if (e.target === settingsModal) closeSettingsModal();
   });
 
-  // Reset stats
+  document.addEventListener("openSettings", openSettingsModal);
   resetStatsBtn.addEventListener("click", confirmResetStats);
 
-  // Theme functions
   function initTheme() {
     const savedTheme = localStorage.getItem("theme") || "light";
     if (savedTheme === "dark") {
@@ -59,7 +71,6 @@ document.addEventListener("DOMContentLoaded", function () {
       ? "dark"
       : "light";
     const newTheme = currentTheme === "light" ? "dark" : "light";
-
     localStorage.setItem("theme", newTheme);
 
     if (newTheme === "dark") {
@@ -69,20 +80,65 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Profile functions
   function openProfileModal() {
     updateStatsDisplay();
     profileModal.classList.remove("hidden");
-    setTimeout(() => {
-      profileModal.classList.add("active");
-    }, 10);
+    setTimeout(() => profileModal.classList.add("active"), 10);
   }
 
   function closeProfileModal() {
     profileModal.classList.remove("active");
-    setTimeout(() => {
-      profileModal.classList.add("hidden");
-    }, 300);
+    setTimeout(() => profileModal.classList.add("hidden"), 300);
+  }
+
+  function openSettingsModal() {
+    if (!settingsModal || !activeQuiz) return;
+
+    const currentSettings = activeQuiz.settings;
+
+    // Region selection
+    document.querySelectorAll('input[name="region"]').forEach((radio) => {
+      radio.checked = radio.value === currentSettings.region;
+    });
+
+    // Question count
+    if (questionSlider && questionDisplay) {
+      questionSlider.value = currentSettings.questionCount;
+      questionDisplay.textContent = `${currentSettings.questionCount} Questions`;
+    }
+
+    // Difficulty
+    document.querySelectorAll('input[name="difficulty"]').forEach((radio) => {
+      radio.checked = radio.value === currentSettings.difficulty;
+    });
+
+    settingsModal.classList.remove("hidden");
+    setTimeout(() => settingsModal.classList.add("active"), 10);
+  }
+
+  function closeSettingsModal() {
+    if (!settingsModal) return;
+    settingsModal.classList.remove("active");
+    setTimeout(() => settingsModal.classList.add("hidden"), 300);
+  }
+
+  function applySettings() {
+    if (!activeQuiz) return;
+
+    const regionValue =
+      document.querySelector('input[name="region"]:checked')?.value || "all";
+    const questionCount = questionSlider ? parseInt(questionSlider.value) : 10;
+    const difficultyValue =
+      document.querySelector('input[name="difficulty"]:checked')?.value ||
+      "easy";
+
+    activeQuiz.updateSettings({
+      region: regionValue,
+      questionCount: questionCount,
+      difficulty: difficultyValue,
+    });
+
+    closeSettingsModal();
   }
 
   function updateStatsDisplay() {
@@ -93,7 +149,6 @@ document.addEventListener("DOMContentLoaded", function () {
       population: { bestScore: 0, gamesPlayed: 0 },
     };
 
-    // Update each quiz stats display
     Object.keys(stats).forEach((quizType) => {
       const bestScoreElement = document.getElementById(`${quizType}-best`);
       const gamesPlayedElement = document.getElementById(`${quizType}-games`);
@@ -104,11 +159,9 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    // Update last updated timestamp
     const lastUpdatedElement = document.getElementById("last-updated");
     if (lastUpdatedElement) {
-      const now = new Date();
-      lastUpdatedElement.textContent = now.toLocaleString();
+      lastUpdatedElement.textContent = new Date().toLocaleString();
     }
   }
 
@@ -132,46 +185,38 @@ document.addEventListener("DOMContentLoaded", function () {
         population: { bestScore: 0, gamesPlayed: 0 },
       })
     );
-
     updateStatsDisplay();
   }
 
-  // Quiz functions
   function startQuiz(quizType) {
-    // Hide welcome section, show quiz container
     welcomeSection.classList.add("hidden");
     quizContainer.classList.remove("hidden");
-
-    // Set quiz title
     document.getElementById("quiz-title").textContent = getQuizTitle(quizType);
 
-    // Initialize quiz based on type
     switch (quizType) {
       case "flag":
         activeQuiz = new FlagQuiz();
         break;
       case "capital":
-        // We'll implement other quiz types later
-        alert("Capital Cities quiz coming soon!");
-        welcomeSection.classList.remove("hidden");
-        quizContainer.classList.add("hidden");
-        return;
+        activeQuiz = new CapitalQuiz();
+        break;
       case "size":
-        alert("Size Ranking quiz coming soon!");
-        welcomeSection.classList.remove("hidden");
-        quizContainer.classList.add("hidden");
-        return;
       case "population":
-        alert("Population quiz coming soon!");
+        alert(`${getQuizTitle(quizType)} coming soon!`);
         welcomeSection.classList.remove("hidden");
         quizContainer.classList.add("hidden");
         return;
       default:
-        // Default to flag quiz
         activeQuiz = new FlagQuiz();
     }
 
-    // Start the quiz
+    const settingsBtn = document.getElementById("quiz-settings-btn");
+    if (settingsBtn) {
+      const newSettingsBtn = settingsBtn.cloneNode(true);
+      settingsBtn.parentNode.replaceChild(newSettingsBtn, settingsBtn);
+      newSettingsBtn.addEventListener("click", openSettingsModal);
+    }
+
     activeQuiz.init();
   }
 
@@ -182,7 +227,6 @@ document.addEventListener("DOMContentLoaded", function () {
       size: "Size Ranking Quiz",
       population: "Population Quiz",
     };
-
     return titles[quizType] || "Geography Quiz";
   }
 });

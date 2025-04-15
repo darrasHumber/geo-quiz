@@ -1,7 +1,7 @@
 /**
- * Flag Quiz Module - Handles the flag identification quiz
+ * Capital Quiz Module - Handles the capital city identification quiz
  */
-class FlagQuiz {
+class CapitalQuiz {
   constructor() {
     this.quizContainer = document.getElementById("quiz-container");
     this.quizContent = document.getElementById("quiz-content");
@@ -17,7 +17,7 @@ class FlagQuiz {
     this.currentQuestion = null;
     this.allCountries = [];
     this.filteredCountries = [];
-    this.canadaData = null; // Store Canada data for first question
+    this.usaData = null; // Store USA data for first question
     this.score = 0;
     this.hintsUsed = 0;
     this.currentHints = [];
@@ -133,7 +133,7 @@ class FlagQuiz {
    * Load saved settings from localStorage
    */
   loadSettings() {
-    const savedSettings = localStorage.getItem("flagQuizSettings");
+    const savedSettings = localStorage.getItem("capitalQuizSettings");
     if (savedSettings) {
       try {
         this.settings = JSON.parse(savedSettings);
@@ -147,7 +147,7 @@ class FlagQuiz {
    * Save settings to localStorage
    */
   saveSettings() {
-    localStorage.setItem("flagQuizSettings", JSON.stringify(this.settings));
+    localStorage.setItem("capitalQuizSettings", JSON.stringify(this.settings));
   }
 
   /**
@@ -161,12 +161,12 @@ class FlagQuiz {
         (country) => country.region === this.settings.region
       );
 
-      // Make sure Canada is included if it's not in the selected region
+      // Make sure USA is included if it's not in the selected region
       if (
-        this.canadaData &&
-        !this.filteredCountries.some((country) => country.cca2 === "CA")
+        this.usaData &&
+        !this.filteredCountries.some((country) => country.cca2 === "US")
       ) {
-        this.filteredCountries.push(this.canadaData);
+        this.filteredCountries.push(this.usaData);
       }
     }
 
@@ -197,18 +197,15 @@ class FlagQuiz {
 
       const allCountriesData = await response.json();
 
-      // Find Canada data
-      this.canadaData = allCountriesData.find(
-        (country) => country.cca2 === "CA"
-      );
+      // Find USA data
+      this.usaData = allCountriesData.find((country) => country.cca2 === "US");
 
       // Filter countries to ensure they have all required data
       this.allCountries = allCountriesData.filter(
         (country) =>
           country.name &&
-          country.flags &&
-          country.flags.png &&
           country.capital &&
+          country.capital.length > 0 &&
           country.population
       );
 
@@ -339,10 +336,10 @@ class FlagQuiz {
       let correctCountry;
       let options;
 
-      // For the first question, always use Canada
-      if (!this.firstQuestionShown && this.canadaData) {
+      // For the first question, always use USA (Washington, D.C.)
+      if (!this.firstQuestionShown && this.usaData) {
         this.firstQuestionShown = true;
-        correctCountry = this.canadaData;
+        correctCountry = this.usaData;
 
         // Get 3 other random countries for options
         const otherCountries = this.getRandomCountries(3);
@@ -383,12 +380,12 @@ class FlagQuiz {
    * Get random countries from the filtered data
    */
   getRandomCountries(count) {
-    // Get countries that are not Canada for general selection
-    const nonCanadaCountries = this.filteredCountries.filter(
-      (country) => !this.canadaData || country.cca2 !== "CA"
+    // Get countries that are not USA for general selection
+    const nonUSACountries = this.filteredCountries.filter(
+      (country) => !this.usaData || country.cca2 !== "US"
     );
 
-    const shuffled = [...nonCanadaCountries].sort(() => 0.5 - Math.random());
+    const shuffled = [...nonUSACountries].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }
 
@@ -397,6 +394,7 @@ class FlagQuiz {
    */
   renderQuestion() {
     const { correctCountry, options } = this.currentQuestion;
+    const capital = correctCountry.capital[0];
 
     this.quizContent.innerHTML = `
         <div class="question-counter">
@@ -407,11 +405,10 @@ class FlagQuiz {
             }</span> seconds
           </div>
         </div>
-        <div class="flag-question">
-          <div class="flag-container">
-            <img src="${
-              correctCountry.flags.png
-            }" alt="Country Flag" class="flag-image">
+        <div class="capital-question">
+          <div class="capital-container">
+            <h2 class="capital-name">${capital}</h2>
+            <p class="question-text">Which country has this capital city?</p>
           </div>
           
           <div class="hint-container" id="hint-container">
@@ -504,11 +501,7 @@ class FlagQuiz {
 
     // List of possible hints
     const availableHints = [
-      {
-        id: "capital",
-        text: `Capital: ${correctCountry.capital?.[0] || "N/A"}`,
-      },
-      { id: "region", text: `Region: ${correctCountry.region || "N/A"}` },
+      { id: "continent", text: `Continent: ${correctCountry.region || "N/A"}` },
       {
         id: "population",
         text: `Population: ${
@@ -518,6 +511,12 @@ class FlagQuiz {
       {
         id: "area",
         text: `Area: ${correctCountry.area?.toLocaleString() || "N/A"} km²`,
+      },
+      {
+        id: "language",
+        text: `Language: ${
+          Object.values(correctCountry.languages || {})[0] || "N/A"
+        }`,
       },
     ].filter((hint) => !this.currentHints.find((h) => h.id === hint.id));
 
@@ -656,15 +655,15 @@ class FlagQuiz {
     const statsKey = "geoQuizStats";
     let stats = JSON.parse(localStorage.getItem(statsKey)) || {};
 
-    // Initialize flag quiz stats if not exist
-    if (!stats.flag) {
-      stats.flag = { bestScore: 0, gamesPlayed: 0 };
+    // Initialize capital quiz stats if not exist
+    if (!stats.capital) {
+      stats.capital = { bestScore: 0, gamesPlayed: 0 };
     }
 
     // Update stats
-    stats.flag.gamesPlayed += 1;
-    if (this.score > stats.flag.bestScore) {
-      stats.flag.bestScore = this.score;
+    stats.capital.gamesPlayed += 1;
+    if (this.score > stats.capital.bestScore) {
+      stats.capital.bestScore = this.score;
     }
 
     // Save updated stats
@@ -683,4 +682,4 @@ class FlagQuiz {
   }
 }
 
-export default FlagQuiz;
+export default CapitalQuiz;
