@@ -1,7 +1,7 @@
 /**
- * Flag Quiz Module - Handles the flag identification quiz
+ * Country to Capital Quiz Module - Handles the country to capital identification quiz
  */
-class FlagQuiz {
+class CountryToCapitalQuiz {
   constructor() {
     this.quizContainer = document.getElementById("quiz-container");
     this.quizContent = document.getElementById("quiz-content");
@@ -85,7 +85,7 @@ class FlagQuiz {
   quitQuiz() {
     if (
       confirm(
-        "Are you sure you want to quit this quiz? Your progress may be lost."
+        "Are you sure you want to quit this quiz? Your progress will be lost."
       )
     ) {
       // Stop timers
@@ -138,7 +138,7 @@ class FlagQuiz {
    * Load saved settings from localStorage
    */
   loadSettings() {
-    const savedSettings = localStorage.getItem("flagQuizSettings");
+    const savedSettings = localStorage.getItem("countryToCapitalQuizSettings");
     if (savedSettings) {
       try {
         this.settings = JSON.parse(savedSettings);
@@ -152,7 +152,10 @@ class FlagQuiz {
    * Save settings to localStorage
    */
   saveSettings() {
-    localStorage.setItem("flagQuizSettings", JSON.stringify(this.settings));
+    localStorage.setItem(
+      "countryToCapitalQuizSettings",
+      JSON.stringify(this.settings)
+    );
   }
 
   /**
@@ -198,9 +201,8 @@ class FlagQuiz {
       this.allCountries = allCountriesData.filter(
         (country) =>
           country.name &&
-          country.flags &&
-          country.flags.png &&
           country.capital &&
+          country.capital.length > 0 &&
           country.population
       );
 
@@ -220,11 +222,11 @@ class FlagQuiz {
     } catch (error) {
       console.error("Error loading quiz data:", error);
       this.quizContent.innerHTML = `
-          <div class="error">
-            <p>Error loading quiz data. Please try again.</p>
-            <button id="retry-btn" class="btn">Retry</button>
-          </div>
-        `;
+            <div class="error">
+              <p>Error loading quiz data. Please try again.</p>
+              <button id="retry-btn" class="btn">Retry</button>
+            </div>
+          `;
       document
         .getElementById("retry-btn")
         .addEventListener("click", () => this.init());
@@ -236,26 +238,26 @@ class FlagQuiz {
    */
   showStartScreen() {
     this.quizContent.innerHTML = `
-      <div class="start-screen">
-        <h2>Flag Challenge</h2>
-        <p>Test your knowledge of world flags!</p>
-        
-        <div class="quiz-settings-summary">
-          <p><strong>Region:</strong> ${
-            this.settings.region === "all"
-              ? "All Regions"
-              : this.settings.region
-          }</p>
-          <p><strong>Questions:</strong> ${this.settings.questionCount}</p>
-          <p><strong>Difficulty:</strong> ${this.settings.difficulty}</p>
+        <div class="start-screen">
+          <h2>Country to Capital Quiz</h2>
+          <p>Name the capital city of each country!</p>
+          
+          <div class="quiz-settings-summary">
+            <p><strong>Region:</strong> ${
+              this.settings.region === "all"
+                ? "All Regions"
+                : this.settings.region
+            }</p>
+            <p><strong>Questions:</strong> ${this.settings.questionCount}</p>
+            <p><strong>Difficulty:</strong> ${this.settings.difficulty}</p>
+          </div>
+          
+          <div class="start-buttons">
+            <button id="start-quiz-btn" class="btn">Start Quiz</button>
+            <button id="change-settings-btn" class="btn settings-btn">Change Settings</button>
+          </div>
         </div>
-        
-        <div class="start-buttons">
-          <button id="start-quiz-btn" class="btn">Start Quiz</button>
-          <button id="change-settings-btn" class="btn settings-btn"> <span>⚙️</span> Change Settings</button>
-        </div>
-      </div>
-    `;
+      `;
 
     // Add event listeners
     document.getElementById("start-quiz-btn").addEventListener("click", () => {
@@ -316,7 +318,7 @@ class FlagQuiz {
       if (this.questionTimeRemaining <= 0) {
         clearInterval(this.questionTimer);
         this.showFeedback(
-          `Time's up! The answer was ${this.currentQuestion.correctCountry.name.common}`,
+          `Time's up! The answer was ${this.currentQuestion.correctCapital}`,
           false
         );
 
@@ -376,12 +378,21 @@ class FlagQuiz {
       // Get a random selection of countries
       const randomCountries = this.getRandomCountries(4);
       const correctCountry = randomCountries[0];
-      const options = [...randomCountries];
+      const correctCapital = correctCountry.capital[0];
+
+      // Get different capitals for options
+      const capitalOptions = [correctCapital];
+
+      // Add other random capitals as options
+      randomCountries.slice(1).forEach((country) => {
+        capitalOptions.push(country.capital[0]);
+      });
 
       // Save current question data
       this.currentQuestion = {
         correctCountry,
-        options: this.shuffleArray(options),
+        correctCapital,
+        options: this.shuffleArray(capitalOptions),
       };
 
       // Render the question
@@ -392,11 +403,11 @@ class FlagQuiz {
     } catch (error) {
       console.error("Error loading next question:", error);
       this.quizContent.innerHTML = `
-          <div class="error">
-            <p>Error loading next question. Please try again.</p>
-            <button id="continue-btn" class="btn">Continue</button>
-          </div>
-        `;
+            <div class="error">
+              <p>Error loading next question. Please try again.</p>
+              <button id="continue-btn" class="btn">Continue</button>
+            </div>
+          `;
       document
         .getElementById("continue-btn")
         .addEventListener("click", () => this.nextQuestion());
@@ -418,45 +429,45 @@ class FlagQuiz {
    */
   renderQuestion() {
     const { correctCountry, options } = this.currentQuestion;
+    const countryName = correctCountry.name.common;
 
     this.quizContent.innerHTML = `
-        <div class="question-counter">
-          Question ${this.questionCount} of ${this.settings.questionCount}
-          <div class="question-timer-container">
-            Time remaining: <span id="question-timer">${
-              this.questionTimeLimit
-            }</span> seconds
+          <div class="question-counter">
+            Question ${this.questionCount} of ${this.settings.questionCount}
+            <div class="question-timer-container">
+              Time remaining: <span id="question-timer">${
+                this.questionTimeLimit
+              }</span> seconds
+            </div>
           </div>
-        </div>
-        <div class="flag-question">
-          <div class="flag-container">
-            <img src="${
-              correctCountry.flags.png
-            }" alt="Country Flag" class="flag-image">
+          <div class="country-question">
+            <div class="country-container">
+              <h2 class="country-name">${countryName}</h2>
+              <p class="question-text">What is the capital city of this country?</p>
+            </div>
+            
+            <div class="hint-container" id="hint-container">
+              <!-- Hints will be displayed here -->
+            </div>
+            
+            <div class="options-container">
+              ${options
+                .map(
+                  (capital) => `
+                <button class="option-btn" data-capital="${capital}">
+                  ${capital}
+                </button>
+              `
+                )
+                .join("")}
+            </div>
           </div>
-          
-          <div class="hint-container" id="hint-container">
-            <!-- Hints will be displayed here -->
-          </div>
-          
-          <div class="options-container">
-            ${options
-              .map(
-                (country) => `
-              <button class="option-btn" data-code="${country.cca3}">
-                ${country.name.common}
-              </button>
-            `
-              )
-              .join("")}
-          </div>
-        </div>
-      `;
+        `;
 
     // Add event listeners to options
     document.querySelectorAll(".option-btn").forEach((button) => {
       button.addEventListener("click", (event) => {
-        this.checkAnswer(event.target.dataset.code);
+        this.checkAnswer(event.target.dataset.capital);
       });
     });
   }
@@ -464,23 +475,23 @@ class FlagQuiz {
   /**
    * Check if the selected answer is correct
    */
-  checkAnswer(selectedCode) {
+  checkAnswer(selectedCapital) {
     // Clear question timer
     if (this.questionTimer) {
       clearInterval(this.questionTimer);
     }
 
-    const { correctCountry } = this.currentQuestion;
-    const isCorrect = selectedCode === correctCountry.cca3;
+    const { correctCapital } = this.currentQuestion;
+    const isCorrect = selectedCapital === correctCapital;
 
     // Disable all buttons to prevent multiple selections
     document.querySelectorAll(".option-btn").forEach((button) => {
       button.disabled = true;
 
       // Highlight correct and incorrect answers
-      if (button.dataset.code === correctCountry.cca3) {
+      if (button.dataset.capital === correctCapital) {
         button.classList.add("correct");
-      } else if (button.dataset.code === selectedCode && !isCorrect) {
+      } else if (button.dataset.capital === selectedCapital && !isCorrect) {
         button.classList.add("incorrect");
       }
     });
@@ -498,7 +509,7 @@ class FlagQuiz {
       this.updateScore();
 
       this.showFeedback(
-        `Incorrect! The answer was ${correctCountry.name.common}. -1 point`,
+        `Incorrect! The capital of ${this.currentQuestion.correctCountry.name.common} is ${correctCapital}. -1 point`,
         false
       );
     }
@@ -528,11 +539,7 @@ class FlagQuiz {
 
     // List of possible hints
     const availableHints = [
-      {
-        id: "capital",
-        text: `Capital: ${correctCountry.capital?.[0] || "N/A"}`,
-      },
-      { id: "region", text: `Region: ${correctCountry.region || "N/A"}` },
+      { id: "continent", text: `Continent: ${correctCountry.region || "N/A"}` },
       {
         id: "population",
         text: `Population: ${
@@ -542,6 +549,20 @@ class FlagQuiz {
       {
         id: "area",
         text: `Area: ${correctCountry.area?.toLocaleString() || "N/A"} km²`,
+      },
+      {
+        id: "language",
+        text: `Language: ${
+          Object.values(correctCountry.languages || {})[0] || "N/A"
+        }`,
+      },
+      {
+        id: "currency",
+        text: `Currency: ${
+          correctCountry.currencies
+            ? Object.values(correctCountry.currencies)[0]?.name || "N/A"
+            : "N/A"
+        }`,
       },
     ].filter((hint) => !this.currentHints.find((h) => h.id === hint.id));
 
@@ -561,10 +582,10 @@ class FlagQuiz {
 
     // Display the hint
     hintContainer.innerHTML += `
-        <div class="hint">
-          <span class="hint-icon">💡</span> ${randomHint.text}
-        </div>
-      `;
+          <div class="hint">
+            <span class="hint-icon">💡</span> ${randomHint.text}
+          </div>
+        `;
   }
 
   /**
@@ -641,24 +662,24 @@ class FlagQuiz {
 
     // Show results
     this.quizContent.innerHTML = `
-        <div class="quiz-results">
-          <h2>Quiz Complete!</h2>
-          <p>Your final score: ${this.score}/${maxPossibleScore}</p>
-          <p>Time taken: ${minutes}m ${seconds}s</p>
-          <p>Region: ${
-            this.settings.region === "all"
-              ? "All Regions"
-              : this.settings.region
-          }</p>
-          <p>Questions: ${this.settings.questionCount}</p>
-          <p>Difficulty: ${this.settings.difficulty}</p>
-          <div class="result-buttons">
-            <button id="play-again-btn" class="btn">Play Again</button>
-            <button id="change-settings-btn" class="btn">Change Settings</button>
-            <button id="home-btn" class="btn">Back to Home</button>
+          <div class="quiz-results">
+            <h2>Quiz Complete!</h2>
+            <p>Your final score: ${this.score}/${maxPossibleScore}</p>
+            <p>Time taken: ${minutes}m ${seconds}s</p>
+            <p>Region: ${
+              this.settings.region === "all"
+                ? "All Regions"
+                : this.settings.region
+            }</p>
+            <p>Questions: ${this.settings.questionCount}</p>
+            <p>Difficulty: ${this.settings.difficulty}</p>
+            <div class="result-buttons">
+              <button id="play-again-btn" class="btn">Play Again</button>
+              <button id="change-settings-btn" class="btn">Change Settings</button>
+              <button id="home-btn" class="btn">Back to Home</button>
+            </div>
           </div>
-        </div>
-      `;
+        `;
 
     // Add event listeners
     document.getElementById("play-again-btn").addEventListener("click", () => {
@@ -685,15 +706,15 @@ class FlagQuiz {
     const statsKey = "geoQuizStats";
     let stats = JSON.parse(localStorage.getItem(statsKey)) || {};
 
-    // Initialize flag quiz stats if not exist
-    if (!stats.flag) {
-      stats.flag = { bestScore: 0, gamesPlayed: 0 };
+    // Initialize country-to-capital quiz stats if not exist
+    if (!stats["country-to-capital"]) {
+      stats["country-to-capital"] = { bestScore: 0, gamesPlayed: 0 };
     }
 
     // Update stats
-    stats.flag.gamesPlayed += 1;
-    if (this.score > stats.flag.bestScore) {
-      stats.flag.bestScore = this.score;
+    stats["country-to-capital"].gamesPlayed += 1;
+    if (this.score > stats["country-to-capital"].bestScore) {
+      stats["country-to-capital"].bestScore = this.score;
     }
 
     // Save updated stats
@@ -712,4 +733,4 @@ class FlagQuiz {
   }
 }
 
-export default FlagQuiz;
+export default CountryToCapitalQuiz;
