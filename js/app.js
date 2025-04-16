@@ -1,5 +1,6 @@
 import FlagQuiz from "./modules/flag-quiz.js";
 import CapitalQuiz from "./modules/capital-quiz.js";
+import CountryToCapitalQuiz from "./modules/country-capital-quiz.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   const welcomeSection = document.getElementById("welcome-section");
@@ -147,6 +148,8 @@ document.addEventListener("DOMContentLoaded", function () {
       capital: { bestScore: 0, gamesPlayed: 0 },
       size: { bestScore: 0, gamesPlayed: 0 },
       population: { bestScore: 0, gamesPlayed: 0 },
+      "country-to-capital": { bestScore: 0, gamesPlayed: 0 },
+      "flag-to-capital": { bestScore: 0, gamesPlayed: 0 },
     };
 
     Object.keys(stats).forEach((quizType) => {
@@ -183,6 +186,8 @@ document.addEventListener("DOMContentLoaded", function () {
         capital: { bestScore: 0, gamesPlayed: 0 },
         size: { bestScore: 0, gamesPlayed: 0 },
         population: { bestScore: 0, gamesPlayed: 0 },
+        "country-to-capital": { bestScore: 0, gamesPlayed: 0 },
+        "flag-to-capital": { bestScore: 0, gamesPlayed: 0 },
       })
     );
     updateStatsDisplay();
@@ -200,6 +205,10 @@ document.addEventListener("DOMContentLoaded", function () {
       case "capital":
         activeQuiz = new CapitalQuiz();
         break;
+      case "country-to-capital":
+        activeQuiz = new CountryToCapitalQuiz();
+        break;
+      case "flag-to-capital":
       case "size":
       case "population":
         alert(`${getQuizTitle(quizType)} coming soon!`);
@@ -226,6 +235,8 @@ document.addEventListener("DOMContentLoaded", function () {
       capital: "Capital Cities Quiz",
       size: "Size Ranking Quiz",
       population: "Population Quiz",
+      "country-to-capital": "Country to Capital Quiz",
+      "flag-to-capital": "Flag to Capital Quiz",
     };
     return titles[quizType] || "Geography Quiz";
   }
