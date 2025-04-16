@@ -10,24 +10,23 @@ class FlagQuiz {
     this.hintButton = document.getElementById("hint-btn");
     this.skipButton = document.getElementById("skip-btn");
     this.settingsButton = document.getElementById("quiz-settings-btn");
-    this.quitButton = document.getElementById("quit-btn");
     this.quizControls = document.querySelector(".quiz-controls");
     this.quizHeader = document.querySelector(".quiz-header");
 
     this.currentQuestion = null;
     this.allCountries = [];
     this.filteredCountries = [];
-    this.canadaData = null; // Store Canada data for first question
     this.score = 0;
+    this.initialScore = 0;
     this.hintsUsed = 0;
     this.currentHints = [];
     this.timerInterval = null;
     this.startTime = null;
     this.questionCount = 0;
-    this.firstQuestionShown = false;
     this.questionTimer = null;
     this.questionTimeLimit = 30; // 30 seconds per question
     this.questionTimeRemaining = this.questionTimeLimit;
+    this.quizStarted = false;
 
     // Default settings
     this.settings = {
@@ -53,10 +52,6 @@ class FlagQuiz {
 
     if (this.skipButton) {
       this.skipButton.addEventListener("click", () => this.nextQuestion());
-    }
-
-    if (this.quitButton) {
-      this.quitButton.addEventListener("click", () => this.quitQuiz());
     }
   }
 
@@ -90,17 +85,22 @@ class FlagQuiz {
   quitQuiz() {
     if (
       confirm(
-        "Are you sure you want to quit this quiz? Your progress will be lost."
+        "Are you sure you want to quit this quiz? Your progress may be lost."
       )
     ) {
       // Stop timers
-      clearInterval(this.timerInterval);
-      clearInterval(this.questionTimer);
-
-      // Show quiz controls again for next quiz
-      if (this.quizControls) {
-        this.quizControls.classList.remove("hidden");
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
       }
+
+      if (this.questionTimer) {
+        clearInterval(this.questionTimer);
+        this.questionTimer = null;
+      }
+
+      // Reset quiz state
+      this.quizStarted = false;
 
       // Return to home screen
       document.getElementById("quiz-container").classList.add("hidden");
@@ -125,8 +125,13 @@ class FlagQuiz {
     // Filter countries based on new settings
     this.filterCountries();
 
-    // Restart quiz with new settings
-    this.startQuiz();
+    // If the quiz has already started, restart it with new settings
+    if (this.quizStarted) {
+      this.startQuiz();
+    } else {
+      // Otherwise just show the start screen with updated settings
+      this.showStartScreen();
+    }
   }
 
   /**
@@ -160,14 +165,6 @@ class FlagQuiz {
       this.filteredCountries = this.allCountries.filter(
         (country) => country.region === this.settings.region
       );
-
-      // Make sure Canada is included if it's not in the selected region
-      if (
-        this.canadaData &&
-        !this.filteredCountries.some((country) => country.cca2 === "CA")
-      ) {
-        this.filteredCountries.push(this.canadaData);
-      }
     }
 
     // Ensure we have enough countries for the quiz
@@ -197,11 +194,6 @@ class FlagQuiz {
 
       const allCountriesData = await response.json();
 
-      // Find Canada data
-      this.canadaData = allCountriesData.find(
-        (country) => country.cca2 === "CA"
-      );
-
       // Filter countries to ensure they have all required data
       this.allCountries = allCountriesData.filter(
         (country) =>
@@ -218,8 +210,13 @@ class FlagQuiz {
       // Add back button to quiz header
       this.addBackButton();
 
-      // Start quiz
-      this.startQuiz();
+      // Hide quiz controls initially (they should only show during active quiz)
+      if (this.quizControls) {
+        this.quizControls.classList.add("hidden");
+      }
+
+      // Show start screen
+      this.showStartScreen();
     } catch (error) {
       console.error("Error loading quiz data:", error);
       this.quizContent.innerHTML = `
@@ -235,17 +232,57 @@ class FlagQuiz {
   }
 
   /**
+   * Show the start screen with settings
+   */
+  showStartScreen() {
+    this.quizContent.innerHTML = `
+      <div class="start-screen">
+        <h2>Flag Challenge</h2>
+        <p>Test your knowledge of world flags!</p>
+        
+        <div class="quiz-settings-summary">
+          <p><strong>Region:</strong> ${
+            this.settings.region === "all"
+              ? "All Regions"
+              : this.settings.region
+          }</p>
+          <p><strong>Questions:</strong> ${this.settings.questionCount}</p>
+          <p><strong>Difficulty:</strong> ${this.settings.difficulty}</p>
+        </div>
+        
+        <div class="start-buttons">
+          <button id="start-quiz-btn" class="btn">Start Quiz</button>
+          <button id="change-settings-btn" class="btn settings-btn">Change Settings</button>
+        </div>
+      </div>
+    `;
+
+    // Add event listeners
+    document.getElementById("start-quiz-btn").addEventListener("click", () => {
+      this.quizStarted = true;
+      this.startQuiz();
+    });
+
+    document
+      .getElementById("change-settings-btn")
+      .addEventListener("click", () => {
+        const event = new CustomEvent("openSettings");
+        document.dispatchEvent(event);
+      });
+  }
+
+  /**
    * Start the quiz
    */
   startQuiz() {
     // Reset quiz state
-    this.score = 0;
+    this.score = this.settings.questionCount; // Initialize score to number of questions
+    this.initialScore = this.settings.questionCount;
     this.hintsUsed = 0;
     this.questionCount = 0;
-    this.firstQuestionShown = false;
     this.updateScore();
 
-    // Show quiz controls if they were hidden
+    // Show quiz controls for the active quiz
     if (this.quizControls) {
       this.quizControls.classList.remove("hidden");
     }
@@ -336,23 +373,10 @@ class FlagQuiz {
     this.questionCount++;
 
     try {
-      let correctCountry;
-      let options;
-
-      // For the first question, always use Canada
-      if (!this.firstQuestionShown && this.canadaData) {
-        this.firstQuestionShown = true;
-        correctCountry = this.canadaData;
-
-        // Get 3 other random countries for options
-        const otherCountries = this.getRandomCountries(3);
-        options = [correctCountry, ...otherCountries];
-      } else {
-        // Get a random selection of countries for subsequent questions
-        const randomCountries = this.getRandomCountries(4);
-        correctCountry = randomCountries[0];
-        options = [...randomCountries];
-      }
+      // Get a random selection of countries
+      const randomCountries = this.getRandomCountries(4);
+      const correctCountry = randomCountries[0];
+      const options = [...randomCountries];
 
       // Save current question data
       this.currentQuestion = {
@@ -383,12 +407,9 @@ class FlagQuiz {
    * Get random countries from the filtered data
    */
   getRandomCountries(count) {
-    // Get countries that are not Canada for general selection
-    const nonCanadaCountries = this.filteredCountries.filter(
-      (country) => !this.canadaData || country.cca2 !== "CA"
+    const shuffled = [...this.filteredCountries].sort(
+      () => 0.5 - Math.random()
     );
-
-    const shuffled = [...nonCanadaCountries].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }
 
@@ -466,15 +487,18 @@ class FlagQuiz {
 
     // Update score
     if (isCorrect) {
-      // Calculate score based on hints used
-      const pointsEarned = 5 - this.currentHints.length;
-      this.score += pointsEarned;
+      // Award 2 extra points for correct answer
+      this.score = this.score + 2;
       this.updateScore();
 
-      this.showFeedback(`Correct! +${pointsEarned} points`, true);
+      this.showFeedback(`Correct! +2 points! Your score: ${this.score}`, true);
     } else {
+      // Deduct 1 point for incorrect answer
+      this.score = Math.max(0, this.score - 1);
+      this.updateScore();
+
       this.showFeedback(
-        `Incorrect! The answer was ${correctCountry.name.common}`,
+        `Incorrect! The answer was ${correctCountry.name.common}. -1 point`,
         false
       );
     }
@@ -603,6 +627,10 @@ class FlagQuiz {
     const minutes = Math.floor(elapsedSeconds / 60);
     const seconds = elapsedSeconds % 60;
 
+    // Calculate maximum possible score (initial + 2 points per correct answer)
+    const maxPossibleScore =
+      this.initialScore + 2 * this.settings.questionCount;
+
     // Save stats to localStorage
     this.saveStats();
 
@@ -615,7 +643,7 @@ class FlagQuiz {
     this.quizContent.innerHTML = `
         <div class="quiz-results">
           <h2>Quiz Complete!</h2>
-          <p>Your final score: ${this.score}</p>
+          <p>Your final score: ${this.score}/${maxPossibleScore}</p>
           <p>Time taken: ${minutes}m ${seconds}s</p>
           <p>Region: ${
             this.settings.region === "all"
@@ -632,18 +660,19 @@ class FlagQuiz {
         </div>
       `;
 
-    document
-      .getElementById("play-again-btn")
-      .addEventListener("click", () => this.startQuiz());
+    // Add event listeners
+    document.getElementById("play-again-btn").addEventListener("click", () => {
+      this.startQuiz();
+    });
+
     document
       .getElementById("change-settings-btn")
       .addEventListener("click", () => {
-        // Trigger settings modal from the app
         const event = new CustomEvent("openSettings");
         document.dispatchEvent(event);
       });
+
     document.getElementById("home-btn").addEventListener("click", () => {
-      // Hide quiz container and show welcome section
       document.getElementById("quiz-container").classList.add("hidden");
       document.getElementById("welcome-section").classList.remove("hidden");
     });

@@ -17,17 +17,17 @@ class CapitalQuiz {
     this.currentQuestion = null;
     this.allCountries = [];
     this.filteredCountries = [];
-    this.usaData = null; // Store USA data for first question
     this.score = 0;
+    this.initialScore = 0;
     this.hintsUsed = 0;
     this.currentHints = [];
     this.timerInterval = null;
     this.startTime = null;
     this.questionCount = 0;
-    this.firstQuestionShown = false;
     this.questionTimer = null;
     this.questionTimeLimit = 30; // 30 seconds per question
     this.questionTimeRemaining = this.questionTimeLimit;
+    this.quizStarted = false;
 
     // Default settings
     this.settings = {
@@ -38,25 +38,44 @@ class CapitalQuiz {
 
     // Load saved settings if available
     this.loadSettings();
-
-    // Initialize event listeners
-    this.initEventListeners();
   }
 
   /**
-   * Initialize event listeners
+   * Initialize event listeners - called each time we start a new quiz or go to start screen
    */
   initEventListeners() {
+    // Remove any existing listeners first
+    this.removeEventListeners();
+
+    // Add new listeners
     if (this.hintButton) {
-      this.hintButton.addEventListener("click", () => this.showHint());
+      this.hintButton.onclick = () => this.showHint();
     }
 
     if (this.skipButton) {
-      this.skipButton.addEventListener("click", () => this.nextQuestion());
+      this.skipButton.onclick = () => this.nextQuestion();
+    }
+
+    // Remove the quit button event listener - we'll use only the back button
+    if (this.quitButton) {
+      this.quitButton.style.display = "none";
+    }
+  }
+
+  /**
+   * Remove event listeners
+   */
+  removeEventListeners() {
+    if (this.hintButton) {
+      this.hintButton.onclick = null;
+    }
+
+    if (this.skipButton) {
+      this.skipButton.onclick = null;
     }
 
     if (this.quitButton) {
-      this.quitButton.addEventListener("click", () => this.quitQuiz());
+      this.quitButton.onclick = null;
     }
   }
 
@@ -64,9 +83,10 @@ class CapitalQuiz {
    * Add back button to quiz header
    */
   addBackButton() {
-    // Check if back button already exists
-    if (document.getElementById("back-button")) {
-      return;
+    // Remove any existing back button first
+    const existingBackButton = document.getElementById("back-button");
+    if (existingBackButton) {
+      existingBackButton.remove();
     }
 
     // Create back button
@@ -76,7 +96,7 @@ class CapitalQuiz {
     backButton.innerHTML = "&larr; Back to Home";
 
     // Add event listener
-    backButton.addEventListener("click", () => this.quitQuiz());
+    backButton.onclick = () => this.quitQuiz();
 
     // Add back button to header
     if (this.quizHeader) {
@@ -90,17 +110,22 @@ class CapitalQuiz {
   quitQuiz() {
     if (
       confirm(
-        "Are you sure you want to quit this quiz? Your progress will be lost."
+        "Are you sure you want to quit this quiz? Your progress may be lost."
       )
     ) {
       // Stop timers
-      clearInterval(this.timerInterval);
-      clearInterval(this.questionTimer);
-
-      // Show quiz controls again for next quiz
-      if (this.quizControls) {
-        this.quizControls.classList.remove("hidden");
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
       }
+
+      if (this.questionTimer) {
+        clearInterval(this.questionTimer);
+        this.questionTimer = null;
+      }
+
+      // Reset quiz state
+      this.quizStarted = false;
 
       // Return to home screen
       document.getElementById("quiz-container").classList.add("hidden");
@@ -125,8 +150,13 @@ class CapitalQuiz {
     // Filter countries based on new settings
     this.filterCountries();
 
-    // Restart quiz with new settings
-    this.startQuiz();
+    // If the quiz has already started, restart it with new settings
+    if (this.quizStarted) {
+      this.startQuiz();
+    } else {
+      // Otherwise just show the start screen with updated settings
+      this.showStartScreen();
+    }
   }
 
   /**
@@ -160,14 +190,6 @@ class CapitalQuiz {
       this.filteredCountries = this.allCountries.filter(
         (country) => country.region === this.settings.region
       );
-
-      // Make sure USA is included if it's not in the selected region
-      if (
-        this.usaData &&
-        !this.filteredCountries.some((country) => country.cca2 === "US")
-      ) {
-        this.filteredCountries.push(this.usaData);
-      }
     }
 
     // Ensure we have enough countries for the quiz
@@ -197,9 +219,6 @@ class CapitalQuiz {
 
       const allCountriesData = await response.json();
 
-      // Find USA data
-      this.usaData = allCountriesData.find((country) => country.cca2 === "US");
-
       // Filter countries to ensure they have all required data
       this.allCountries = allCountriesData.filter(
         (country) =>
@@ -215,8 +234,13 @@ class CapitalQuiz {
       // Add back button to quiz header
       this.addBackButton();
 
-      // Start quiz
-      this.startQuiz();
+      // Hide quiz controls initially (they should only show during active quiz)
+      if (this.quizControls) {
+        this.quizControls.classList.add("hidden");
+      }
+
+      // Show start screen
+      this.showStartScreen();
     } catch (error) {
       console.error("Error loading quiz data:", error);
       this.quizContent.innerHTML = `
@@ -225,10 +249,46 @@ class CapitalQuiz {
             <button id="retry-btn" class="btn">Retry</button>
           </div>
         `;
-      document
-        .getElementById("retry-btn")
-        .addEventListener("click", () => this.init());
+      document.getElementById("retry-btn").onclick = () => this.init();
     }
+  }
+
+  /**
+   * Show the start screen with settings
+   */
+  showStartScreen() {
+    this.quizContent.innerHTML = `
+      <div class="start-screen">
+        <h2>Capital Cities Quiz</h2>
+        <p>Test your knowledge of world capitals!</p>
+        
+        <div class="quiz-settings-summary">
+          <p><strong>Region:</strong> ${
+            this.settings.region === "all"
+              ? "All Regions"
+              : this.settings.region
+          }</p>
+          <p><strong>Questions:</strong> ${this.settings.questionCount}</p>
+          <p><strong>Difficulty:</strong> ${this.settings.difficulty}</p>
+        </div>
+        
+        <div class="start-buttons">
+          <button id="start-quiz-btn" class="btn">Start Quiz</button>
+          <button id="change-settings-btn" class="btn settings-btn">Change Settings</button>
+        </div>
+      </div>
+    `;
+
+    // Add event listeners
+    document.getElementById("start-quiz-btn").onclick = () => {
+      this.quizStarted = true;
+      this.startQuiz();
+    };
+
+    document.getElementById("change-settings-btn").onclick = () => {
+      const event = new CustomEvent("openSettings");
+      document.dispatchEvent(event);
+    };
   }
 
   /**
@@ -236,13 +296,16 @@ class CapitalQuiz {
    */
   startQuiz() {
     // Reset quiz state
-    this.score = 0;
+    this.score = this.settings.questionCount; // Initialize score to number of questions
+    this.initialScore = this.settings.questionCount;
     this.hintsUsed = 0;
     this.questionCount = 0;
-    this.firstQuestionShown = false;
     this.updateScore();
 
-    // Show quiz controls if they were hidden
+    // Initialize event listeners for quiz controls
+    this.initEventListeners();
+
+    // Show quiz controls for the active quiz
     if (this.quizControls) {
       this.quizControls.classList.remove("hidden");
     }
@@ -333,23 +396,10 @@ class CapitalQuiz {
     this.questionCount++;
 
     try {
-      let correctCountry;
-      let options;
-
-      // For the first question, always use USA (Washington, D.C.)
-      if (!this.firstQuestionShown && this.usaData) {
-        this.firstQuestionShown = true;
-        correctCountry = this.usaData;
-
-        // Get 3 other random countries for options
-        const otherCountries = this.getRandomCountries(3);
-        options = [correctCountry, ...otherCountries];
-      } else {
-        // Get a random selection of countries for subsequent questions
-        const randomCountries = this.getRandomCountries(4);
-        correctCountry = randomCountries[0];
-        options = [...randomCountries];
-      }
+      // Get a random selection of countries
+      const randomCountries = this.getRandomCountries(4);
+      const correctCountry = randomCountries[0];
+      const options = [...randomCountries];
 
       // Save current question data
       this.currentQuestion = {
@@ -370,9 +420,8 @@ class CapitalQuiz {
             <button id="continue-btn" class="btn">Continue</button>
           </div>
         `;
-      document
-        .getElementById("continue-btn")
-        .addEventListener("click", () => this.nextQuestion());
+      document.getElementById("continue-btn").onclick = () =>
+        this.nextQuestion();
     }
   }
 
@@ -380,12 +429,9 @@ class CapitalQuiz {
    * Get random countries from the filtered data
    */
   getRandomCountries(count) {
-    // Get countries that are not USA for general selection
-    const nonUSACountries = this.filteredCountries.filter(
-      (country) => !this.usaData || country.cca2 !== "US"
+    const shuffled = [...this.filteredCountries].sort(
+      () => 0.5 - Math.random()
     );
-
-    const shuffled = [...nonUSACountries].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }
 
@@ -431,9 +477,9 @@ class CapitalQuiz {
 
     // Add event listeners to options
     document.querySelectorAll(".option-btn").forEach((button) => {
-      button.addEventListener("click", (event) => {
+      button.onclick = (event) => {
         this.checkAnswer(event.target.dataset.code);
-      });
+      };
     });
   }
 
@@ -463,15 +509,18 @@ class CapitalQuiz {
 
     // Update score
     if (isCorrect) {
-      // Calculate score based on hints used
-      const pointsEarned = 5 - this.currentHints.length;
-      this.score += pointsEarned;
+      // Award 2 extra points for correct answer
+      this.score = this.score + 2;
       this.updateScore();
 
-      this.showFeedback(`Correct! +${pointsEarned} points`, true);
+      this.showFeedback(`Correct! +2 points! Your score: ${this.score}`, true);
     } else {
+      // Deduct 1 point for incorrect answer
+      this.score = Math.max(0, this.score - 1);
+      this.updateScore();
+
       this.showFeedback(
-        `Incorrect! The answer was ${correctCountry.name.common}`,
+        `Incorrect! The answer was ${correctCountry.name.common}. -1 point`,
         false
       );
     }
@@ -602,6 +651,10 @@ class CapitalQuiz {
     const minutes = Math.floor(elapsedSeconds / 60);
     const seconds = elapsedSeconds % 60;
 
+    // Calculate maximum possible score
+    const maxPossibleScore =
+      this.initialScore + 2 * this.settings.questionCount;
+
     // Save stats to localStorage
     this.saveStats();
 
@@ -614,7 +667,7 @@ class CapitalQuiz {
     this.quizContent.innerHTML = `
         <div class="quiz-results">
           <h2>Quiz Complete!</h2>
-          <p>Your final score: ${this.score}</p>
+          <p>Your final score: ${this.score}/${maxPossibleScore}</p>
           <p>Time taken: ${minutes}m ${seconds}s</p>
           <p>Region: ${
             this.settings.region === "all"
@@ -631,21 +684,16 @@ class CapitalQuiz {
         </div>
       `;
 
-    document
-      .getElementById("play-again-btn")
-      .addEventListener("click", () => this.startQuiz());
-    document
-      .getElementById("change-settings-btn")
-      .addEventListener("click", () => {
-        // Trigger settings modal from the app
-        const event = new CustomEvent("openSettings");
-        document.dispatchEvent(event);
-      });
-    document.getElementById("home-btn").addEventListener("click", () => {
-      // Hide quiz container and show welcome section
+    // Use onclick instead of addEventListener to prevent multiple bindings
+    document.getElementById("play-again-btn").onclick = () => this.startQuiz();
+    document.getElementById("change-settings-btn").onclick = () => {
+      const event = new CustomEvent("openSettings");
+      document.dispatchEvent(event);
+    };
+    document.getElementById("home-btn").onclick = () => {
       document.getElementById("quiz-container").classList.add("hidden");
       document.getElementById("welcome-section").classList.remove("hidden");
-    });
+    };
   }
 
   /**
