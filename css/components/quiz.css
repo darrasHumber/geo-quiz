@@ -240,6 +240,7 @@
 .option-btn {
   background-color: var(--card-background);
   border: 2px solid var(--border-color);
+  columns: var(--text-color);
   padding: 15px;
   border-radius: 8px;
   font-size: 1rem;
@@ -396,4 +397,96 @@
     max-width: 300px;
     margin: 25px auto 0;
   }
+}
+
+/* Start Screen Styles */
+.start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.start-screen h2 {
+  font-size: 2.2rem;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.start-screen p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #34495e;
+}
+
+.quiz-settings-summary {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 1.5rem;
+  width: 100%;
+  margin-bottom: 2rem;
+  border-left: 4px solid #3498db;
+}
+
+.quiz-settings-summary p {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+  text-align: left;
+}
+
+.start-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.start-buttons .btn {
+  padding: 0.8rem 1.5rem;
+  font-size: 1.1rem;
+}
+
+#start-quiz-btn {
+  background-color: #27ae60;
+  color: white;
+}
+
+#start-quiz-btn:hover {
+  background-color: #2ecc71;
+}
+
+#open-settings-btn {
+  background-color: #f1c40f;
+  color: #2c3e50;
+}
+
+#open-settings-btn:hover {
+  background-color: #f39c12;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .start-screen {
+  background-color: #2c3e50;
+}
+
+[data-theme="dark"] .start-screen h2 {
+  color: #ecf0f1;
+}
+
+[data-theme="dark"] .start-screen p {
+  color: #bdc3c7;
+}
+
+[data-theme="dark"] .quiz-settings-summary {
+  background-color: #34495e;
+  border-left: 4px solid #3498db;
+}
+
+[data-theme="dark"] .quiz-settings-summary p {
+  color: #ecf0f1;
 }
