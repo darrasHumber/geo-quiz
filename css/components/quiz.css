@@ -207,7 +207,7 @@
 .question-text {
   font-size: 1.1rem;
   color: var(--text-light);
-  margin-top: 5px;
+  margin: 25px;
 }
 
 /* ======= HINTS SECTION ======= */

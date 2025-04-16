@@ -1,6 +1,7 @@
 import FlagQuiz from "./modules/flag-quiz.js";
 import CapitalQuiz from "./modules/capital-quiz.js";
 import CountryToCapitalQuiz from "./modules/country-capital-quiz.js";
+import FlagToCapitalQuiz from "./modules/flag-capital-quiz.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   const welcomeSection = document.getElementById("welcome-section");
@@ -209,6 +210,8 @@ document.addEventListener("DOMContentLoaded", function () {
         activeQuiz = new CountryToCapitalQuiz();
         break;
       case "flag-to-capital":
+        activeQuiz = new FlagToCapitalQuiz();
+        break;
       case "size":
       case "population":
         alert(`${getQuizTitle(quizType)} coming soon!`);
