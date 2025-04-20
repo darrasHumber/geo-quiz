@@ -61,9 +61,6 @@ Initially, the quiz would sometimes show the same country multiple times within 
 
 Early versions suffered from overlapping timers when navigating between quizzes, causing multiple timers to run simultaneously. The solution was a comprehensive timer management system that properly cleans up existing timers before starting new ones, using a global registry for tracking all active timers.
 
-### Challenge 3: Data Visualization Performance
-
-Rendering charts for users with extensive quiz history initially caused performance issues. This was addressed by implementing data aggregation techniques and limiting the number of data points displayed in time-series charts.
 
 ## Future Enhancements
 
