@@ -76,3 +76,7 @@ Rendering charts for users with extensive quiz history initially caused performa
 ## [Live Demo](https://darrashumber.github.io/geo-quiz/)
 
 ![GeoQuiz Challenge Screenshot](./assets/images/image.png)
+
+## Project Demo
+
+[Darras GeoQuiz Challenge Demo](https://www.youtube.com/watch?v=qdoFB-OvKAE)
