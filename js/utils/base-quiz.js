@@ -21,6 +21,7 @@ class BaseQuiz {
     this.currentQuestion = null;
     this.allCountries = [];
     this.filteredCountries = [];
+    this.usedCountriesIndices = new Set(); // Track used countries to prevent repeating questions
     this.score = 0;
     this.initialScore = 0;
     this.hintsUsed = 0;
@@ -40,24 +41,70 @@ class BaseQuiz {
       difficulty: "easy",
     };
 
+    // Force removal of all existing timers when a new instance is created
+    window.clearAllQuizTimers && window.clearAllQuizTimers();
+
+    // Global timer tracking
+    if (!window.quizTimers) {
+      window.quizTimers = [];
+    }
+
     // Load saved settings if available
     this.loadSettings();
-
-    // Initialize event listeners
-    this.initEventListeners();
   }
 
   /**
    * Initialize event listeners
    */
   initEventListeners() {
+    // Use a safe approach to add event listeners
     if (this.hintButton) {
-      this.hintButton.addEventListener("click", () => this.showHint());
+      // Remove all existing click handlers
+      const newHintBtn = this.hintButton.cloneNode(true);
+      if (this.hintButton.parentNode) {
+        this.hintButton.parentNode.replaceChild(newHintBtn, this.hintButton);
+        this.hintButton = newHintBtn;
+        this.hintButton.addEventListener("click", this.showHint.bind(this));
+      }
     }
 
     if (this.skipButton) {
-      this.skipButton.addEventListener("click", () => this.nextQuestion());
+      // Remove all existing click handlers
+      const newSkipBtn = this.skipButton.cloneNode(true);
+      if (this.skipButton.parentNode) {
+        this.skipButton.parentNode.replaceChild(newSkipBtn, this.skipButton);
+        this.skipButton = newSkipBtn;
+        this.skipButton.addEventListener("click", this.nextQuestion.bind(this));
+      }
     }
+  }
+
+  /**
+   * Global timer management
+   */
+  registerTimer(timerId) {
+    window.quizTimers.push(timerId);
+    return timerId;
+  }
+
+  /**
+   * Stop all timers globally
+   */
+  static clearAllTimers() {
+    if (window.quizTimers && window.quizTimers.length > 0) {
+      window.quizTimers.forEach((id) => {
+        clearInterval(id);
+        clearTimeout(id);
+      });
+      window.quizTimers = [];
+    }
+  }
+
+  /**
+   * Setup global timer cleanup
+   */
+  static setupGlobalTimerCleanup() {
+    window.clearAllQuizTimers = BaseQuiz.clearAllTimers;
   }
 
   /**
@@ -76,7 +123,7 @@ class BaseQuiz {
     backButton.innerHTML = "&larr; Back to Home";
 
     // Add event listener
-    backButton.addEventListener("click", () => this.quitQuiz());
+    backButton.addEventListener("click", this.quitQuiz.bind(this));
 
     // Add back button to header
     if (this.quizHeader) {
@@ -93,16 +140,8 @@ class BaseQuiz {
         "Are you sure you want to quit this quiz? Your progress will be lost."
       )
     ) {
-      // Stop timers
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval);
-        this.timerInterval = null;
-      }
-
-      if (this.questionTimer) {
-        clearInterval(this.questionTimer);
-        this.questionTimer = null;
-      }
+      // Stop all timers
+      BaseQuiz.clearAllTimers();
 
       // Reset quiz state
       this.quizStarted = false;
@@ -129,6 +168,12 @@ class BaseQuiz {
 
     // Filter countries based on new settings
     this.filterCountries();
+
+    // Stop all timers
+    BaseQuiz.clearAllTimers();
+
+    // Reset used countries
+    this.usedCountriesIndices.clear();
 
     // If the quiz has already started, restart it with new settings
     if (this.quizStarted) {
@@ -182,6 +227,9 @@ class BaseQuiz {
       this.settings.region = "all";
       this.filteredCountries = [...this.allCountries];
     }
+
+    // Reset used countries when filter changes
+    this.usedCountriesIndices.clear();
   }
 
   /**
@@ -189,6 +237,15 @@ class BaseQuiz {
    */
   async init() {
     try {
+      // Stop all timers first
+      BaseQuiz.clearAllTimers();
+
+      // Initialize event listeners
+      this.initEventListeners();
+
+      // Reset used countries
+      this.usedCountriesIndices.clear();
+
       // Show loading state
       this.quizContent.innerHTML =
         '<div class="loading">Loading countries...</div>';
@@ -225,9 +282,12 @@ class BaseQuiz {
             <button id="retry-btn" class="btn">Retry</button>
           </div>
         `;
-      document
-        .getElementById("retry-btn")
-        .addEventListener("click", () => this.init());
+
+      // Safely add click handler
+      const retryBtn = document.getElementById("retry-btn");
+      if (retryBtn) {
+        retryBtn.addEventListener("click", this.init.bind(this));
+      }
     }
   }
 
@@ -253,12 +313,19 @@ class BaseQuiz {
    * Start the quiz
    */
   startQuiz() {
+    // First, stop all timers
+    BaseQuiz.clearAllTimers();
+
     // Reset quiz state
     this.score = this.settings.questionCount; // Initialize score to number of questions
     this.initialScore = this.settings.questionCount;
     this.hintsUsed = 0;
     this.questionCount = 0;
     this.updateScore();
+    this.usedCountriesIndices.clear(); // Reset used countries tracking
+
+    // Reset quiz started flag
+    this.quizStarted = true;
 
     // Show quiz controls for the active quiz
     if (this.quizControls) {
@@ -276,31 +343,40 @@ class BaseQuiz {
    * Start the question timer
    */
   startQuestionTimer() {
-    // Clear any existing timer
+    // First, clear any existing question timer
     if (this.questionTimer) {
       clearInterval(this.questionTimer);
+      this.questionTimer = null;
     }
 
     // Reset timer
     this.questionTimeRemaining = this.questionTimeLimit;
     this.updateQuestionTimerDisplay();
 
-    // Start new timer
-    this.questionTimer = setInterval(() => {
-      this.questionTimeRemaining--;
-      this.updateQuestionTimerDisplay();
+    // Create a new timer with a safe reference
+    const self = this;
+    const newTimer = setInterval(function () {
+      self.questionTimeRemaining--;
+      self.updateQuestionTimerDisplay();
 
       // Move to next question when time is up
-      if (this.questionTimeRemaining <= 0) {
-        clearInterval(this.questionTimer);
-        this.showTimeUpFeedback();
+      if (self.questionTimeRemaining <= 0) {
+        clearInterval(self.questionTimer);
+        self.questionTimer = null;
+        self.showTimeUpFeedback();
 
         // Show next question after delay
-        setTimeout(() => {
-          this.nextQuestion();
+        const timeoutId = setTimeout(function () {
+          self.nextQuestion();
         }, 2000);
+
+        // Register the timeout
+        self.registerTimer(timeoutId);
       }
     }, 1000);
+
+    // Store and register the timer
+    this.questionTimer = this.registerTimer(newTimer);
   }
 
   /**
@@ -341,9 +417,10 @@ class BaseQuiz {
    * This method should be overridden by each quiz type
    */
   nextQuestion() {
-    // Clear any existing question timer
+    // First, clear any existing question timer
     if (this.questionTimer) {
       clearInterval(this.questionTimer);
+      this.questionTimer = null;
     }
 
     // Clear any existing hints
@@ -362,13 +439,52 @@ class BaseQuiz {
   }
 
   /**
-   * Get random countries from the filtered data
+   * Get random countries from the filtered data without repeating
    */
   getRandomCountries(count) {
-    const shuffled = [...this.filteredCountries].sort(
-      () => 0.5 - Math.random()
+    // Check if we're running out of unused countries
+    if (
+      this.usedCountriesIndices.size >=
+      this.filteredCountries.length - count
+    ) {
+      this.usedCountriesIndices.clear(); // Reset if we're running out of countries
+    }
+
+    // First select the correct answer (country that hasn't been used yet)
+    const result = [];
+    const availableIndices = [];
+
+    // Build list of unused indices
+    for (let i = 0; i < this.filteredCountries.length; i++) {
+      if (!this.usedCountriesIndices.has(i)) {
+        availableIndices.push(i);
+      }
+    }
+
+    // If no unused countries, just use all filtered countries
+    if (availableIndices.length === 0) {
+      const shuffled = [...this.filteredCountries].sort(
+        () => 0.5 - Math.random()
+      );
+      return shuffled.slice(0, count);
+    }
+
+    // Select an unused country for the correct answer
+    const randomUnusedIndex =
+      availableIndices[Math.floor(Math.random() * availableIndices.length)];
+    result.push(this.filteredCountries[randomUnusedIndex]);
+    this.usedCountriesIndices.add(randomUnusedIndex); // Mark as used
+
+    // Add remaining options (these can be repeated from previous questions)
+    const otherOptions = this.filteredCountries.filter(
+      (country) =>
+        !result.some((selectedCountry) => selectedCountry.cca3 === country.cca3)
     );
-    return shuffled.slice(0, count);
+
+    const shuffledOptions = this.shuffleArray(otherOptions);
+    result.push(...shuffledOptions.slice(0, count - 1));
+
+    return result;
   }
 
   /**
@@ -406,11 +522,13 @@ class BaseQuiz {
     this.updateScore();
 
     // Display the hint
-    hintContainer.innerHTML += `
-        <div class="hint">
-          <span class="hint-icon">💡</span> ${randomHint.text}
-        </div>
-      `;
+    if (hintContainer) {
+      hintContainer.innerHTML += `
+          <div class="hint">
+            <span class="hint-icon">💡</span> ${randomHint.text}
+          </div>
+        `;
+    }
   }
 
   /**
@@ -432,40 +550,53 @@ class BaseQuiz {
     document.body.appendChild(feedbackDiv);
 
     // Remove the feedback after animation completes
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       if (document.body.contains(feedbackDiv)) {
         document.body.removeChild(feedbackDiv);
       }
     }, 2000);
+
+    // Register the timeout
+    this.registerTimer(timeoutId);
   }
 
   /**
    * Update the score display
    */
   updateScore() {
-    this.scoreElement.textContent = this.score;
+    if (this.scoreElement) {
+      this.scoreElement.textContent = this.score;
+    }
   }
 
   /**
    * Start the quiz timer
    */
   startTimer() {
-    // Clear any existing timer
+    // First clear any existing timer
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
+      this.timerInterval = null;
     }
 
     this.startTime = Date.now();
 
-    this.timerInterval = setInterval(() => {
-      const elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
+    // Create a new timer with a safe reference
+    const self = this;
+    const newTimer = setInterval(function () {
+      const elapsedSeconds = Math.floor((Date.now() - self.startTime) / 1000);
       const minutes = Math.floor(elapsedSeconds / 60);
       const seconds = elapsedSeconds % 60;
 
-      this.timerElement.textContent = `${minutes
-        .toString()
-        .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      if (self.timerElement) {
+        self.timerElement.textContent = `${minutes
+          .toString()
+          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      }
     }, 1000);
+
+    // Store and register the timer
+    this.timerInterval = this.registerTimer(newTimer);
   }
 
   /**
@@ -473,8 +604,7 @@ class BaseQuiz {
    */
   endQuiz() {
     // Stop all timers
-    clearInterval(this.timerInterval);
-    clearInterval(this.questionTimer);
+    BaseQuiz.clearAllTimers();
 
     // Calculate final time
     const elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
@@ -492,6 +622,9 @@ class BaseQuiz {
     if (this.quizControls) {
       this.quizControls.classList.add("hidden");
     }
+
+    // Reset quiz started flag
+    this.quizStarted = false;
 
     // Show results
     this.quizContent.innerHTML = `
@@ -514,22 +647,30 @@ class BaseQuiz {
         </div>
       `;
 
-    // Add event listeners
-    document.getElementById("play-again-btn").addEventListener("click", () => {
-      this.startQuiz();
-    });
+    // Add event listeners (safely)
+    const self = this;
+    const playAgainBtn = document.getElementById("play-again-btn");
+    if (playAgainBtn) {
+      playAgainBtn.addEventListener("click", function () {
+        self.startQuiz();
+      });
+    }
 
-    document
-      .getElementById("change-settings-btn")
-      .addEventListener("click", () => {
+    const changeSettingsBtn = document.getElementById("change-settings-btn");
+    if (changeSettingsBtn) {
+      changeSettingsBtn.addEventListener("click", function () {
         const event = new CustomEvent("openSettings");
         document.dispatchEvent(event);
       });
+    }
 
-    document.getElementById("home-btn").addEventListener("click", () => {
-      document.getElementById("quiz-container").classList.add("hidden");
-      document.getElementById("welcome-section").classList.remove("hidden");
-    });
+    const homeBtn = document.getElementById("home-btn");
+    if (homeBtn) {
+      homeBtn.addEventListener("click", function () {
+        document.getElementById("quiz-container").classList.add("hidden");
+        document.getElementById("welcome-section").classList.remove("hidden");
+      });
+    }
   }
 
   /**
@@ -566,5 +707,8 @@ class BaseQuiz {
     return newArray;
   }
 }
+
+// Setup global timer cleanup on load
+BaseQuiz.setupGlobalTimerCleanup();
 
 export default BaseQuiz;
