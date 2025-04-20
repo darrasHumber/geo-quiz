@@ -652,6 +652,32 @@ class BaseQuiz {
         </div>
       `;
 
+    // Add event listeners (safely)
+    setTimeout(() => {
+      const playAgainBtn = document.getElementById("play-again-btn");
+      if (playAgainBtn) {
+        playAgainBtn.addEventListener("click", () => {
+          this.startQuiz();
+        });
+      }
+
+      const changeSettingsBtn = document.getElementById("change-settings-btn");
+      if (changeSettingsBtn) {
+        changeSettingsBtn.addEventListener("click", () => {
+          const event = new CustomEvent("openSettings");
+          document.dispatchEvent(event);
+        });
+      }
+
+      const homeBtn = document.getElementById("home-btn");
+      if (homeBtn) {
+        homeBtn.addEventListener("click", () => {
+          document.getElementById("quiz-container").classList.add("hidden");
+          document.getElementById("welcome-section").classList.remove("hidden");
+        });
+      }
+    }, 0);
+
     // Rest of your method remains the same...
   }
 
