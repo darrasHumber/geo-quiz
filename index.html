@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GeoQuiz Challenge</title>
     <link rel="stylesheet" href="css/style.css" />
+    <!-- Add Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
     <header>
@@ -45,37 +47,25 @@
           <div class="quiz-card" data-quiz="flag">
             <div class="quiz-icon">🚩</div>
             <h2>Flag Challenge</h2>
-            <p>Identify countries by their flags</p>
+            <p>Match flags to their countries</p>
           </div>
 
           <div class="quiz-card" data-quiz="capital">
             <div class="quiz-icon">🏛️</div>
             <h2>Capital Cities</h2>
-            <p>Match capitals to their countries</p>
+            <p>Identify countries by their capitals</p>
           </div>
-
-          <!-- <div class="quiz-card" data-quiz="size">
-            <div class="quiz-icon">📏</div>
-            <h2>Size Ranking</h2>
-            <p>Arrange countries by land area</p>
-          </div>
-
-          <div class="quiz-card" data-quiz="population">
-            <div class="quiz-icon">👥</div>
-            <h2>Population Quiz</h2>
-            <p>Sort countries by population</p>
-          </div> -->
 
           <div class="quiz-card" data-quiz="country-to-capital">
             <div class="quiz-icon">🗺️</div>
-            <h2>Country to Capital</h2>
-            <p>Name the capital of a given country</p>
+            <h2>Country Explorer</h2>
+            <p>Find the capital of each country</p>
           </div>
 
           <div class="quiz-card" data-quiz="flag-to-capital">
             <div class="quiz-icon">🏁</div>
             <h2>Flag to Capital</h2>
-            <p>Identify capitals from country flags</p>
+            <p>From flag to capital in one step</p>
           </div>
         </div>
       </section>
@@ -96,10 +86,18 @@
         <div class="quiz-controls">
           <button id="hint-btn" class="btn">Get Hint (-1 point)</button>
           <button id="skip-btn" class="btn">Skip Question</button>
-          <!-- <button id="quiz-settings-btn" class="btn settings-btn">
-            <span>⚙️</span> Settings
-          </button>
-          <button id="quit-btn" class="btn danger">Quit Quiz</button> -->
+        </div>
+      </section>
+
+      <!-- Add Statistics Section -->
+      <section class="stats-dashboard hidden" id="stats-section">
+        <div class="dashboard-header">
+          <h2>Your Quiz Statistics</h2>
+          <p>Track your performance and progress over time</p>
+        </div>
+
+        <div class="dashboard-grid" id="dashboard-container">
+          <!-- Charts will be rendered here -->
         </div>
       </section>
     </main>
@@ -111,23 +109,31 @@
         <div class="stats-container">
           <div class="stat-card">
             <h3>Flag Challenge</h3>
-            <p>Best Score: <span id="flag-best">0</span></p>
+            <p>Best Score: <span id="flag-best">0</span> points</p>
+            <p>Best Percentage: <span id="flag-percent">0</span>%</p>
             <p>Games Played: <span id="flag-games">0</span></p>
           </div>
           <div class="stat-card">
             <h3>Capital Cities</h3>
-            <p>Best Score: <span id="capital-best">0</span></p>
+            <p>Best Score: <span id="capital-best">0</span> points</p>
+            <p>Best Percentage: <span id="capital-percent">0</span>%</p>
             <p>Games Played: <span id="capital-games">0</span></p>
           </div>
           <div class="stat-card">
-            <h3>Size Ranking</h3>
-            <p>Best Score: <span id="size-best">0</span></p>
-            <p>Games Played: <span id="size-games">0</span></p>
+            <h3>Country Explorer</h3>
+            <p>
+              Best Score: <span id="country-to-capital-best">0</span> points
+            </p>
+            <p>
+              Best Percentage: <span id="country-to-capital-percent">0</span>%
+            </p>
+            <p>Games Played: <span id="country-to-capital-games">0</span></p>
           </div>
           <div class="stat-card">
-            <h3>Population Quiz</h3>
-            <p>Best Score: <span id="population-best">0</span></p>
-            <p>Games Played: <span id="population-games">0</span></p>
+            <h3>Flag to Capital</h3>
+            <p>Best Score: <span id="flag-to-capital-best">0</span> points</p>
+            <p>Best Percentage: <span id="flag-to-capital-percent">0</span>%</p>
+            <p>Games Played: <span id="flag-to-capital-games">0</span></p>
           </div>
         </div>
         <p class="last-updated">
@@ -210,9 +216,7 @@
     </div>
 
     <footer>
-      <p>
-        &copy; 2025 GeoQuiz Challenge | <a href="#" id="about-link">About</a>
-      </p>
+      <p>&copy; 2025 GeoQuiz Challenge | Mohammed Darras</p>
     </footer>
 
     <script src="js/app.js" type="module"></script>
