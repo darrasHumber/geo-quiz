@@ -145,21 +145,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function updateStatsDisplay() {
     const stats = JSON.parse(localStorage.getItem("geoQuizStats")) || {
-      flag: { bestScore: 0, gamesPlayed: 0 },
-      capital: { bestScore: 0, gamesPlayed: 0 },
-      size: { bestScore: 0, gamesPlayed: 0 },
-      population: { bestScore: 0, gamesPlayed: 0 },
-      "country-to-capital": { bestScore: 0, gamesPlayed: 0 },
-      "flag-to-capital": { bestScore: 0, gamesPlayed: 0 },
+      flag: { bestScore: 0, bestPercentage: 0, gamesPlayed: 0 },
+      capital: { bestScore: 0, bestPercentage: 0, gamesPlayed: 0 },
+      "country-to-capital": { bestScore: 0, bestPercentage: 0, gamesPlayed: 0 },
+      "flag-to-capital": { bestScore: 0, bestPercentage: 0, gamesPlayed: 0 },
     };
 
     Object.keys(stats).forEach((quizType) => {
       const bestScoreElement = document.getElementById(`${quizType}-best`);
+      const percentElement = document.getElementById(`${quizType}-percent`);
       const gamesPlayedElement = document.getElementById(`${quizType}-games`);
 
-      if (bestScoreElement && gamesPlayedElement) {
-        bestScoreElement.textContent = stats[quizType].bestScore;
-        gamesPlayedElement.textContent = stats[quizType].gamesPlayed;
+      if (bestScoreElement) {
+        bestScoreElement.textContent = stats[quizType].bestScore || 0;
+      }
+
+      if (percentElement) {
+        percentElement.textContent = stats[quizType].bestPercentage || 0;
+      }
+
+      if (gamesPlayedElement) {
+        gamesPlayedElement.textContent = stats[quizType].gamesPlayed || 0;
       }
     });
 
@@ -183,12 +189,14 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.setItem(
       "geoQuizStats",
       JSON.stringify({
-        flag: { bestScore: 0, gamesPlayed: 0 },
-        capital: { bestScore: 0, gamesPlayed: 0 },
-        size: { bestScore: 0, gamesPlayed: 0 },
-        population: { bestScore: 0, gamesPlayed: 0 },
-        "country-to-capital": { bestScore: 0, gamesPlayed: 0 },
-        "flag-to-capital": { bestScore: 0, gamesPlayed: 0 },
+        flag: { bestScore: 0, bestPercentage: 0, gamesPlayed: 0 },
+        capital: { bestScore: 0, bestPercentage: 0, gamesPlayed: 0 },
+        "country-to-capital": {
+          bestScore: 0,
+          bestPercentage: 0,
+          gamesPlayed: 0,
+        },
+        "flag-to-capital": { bestScore: 0, bestPercentage: 0, gamesPlayed: 0 },
       })
     );
     updateStatsDisplay();

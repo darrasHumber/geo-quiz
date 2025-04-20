@@ -615,8 +615,11 @@ class BaseQuiz {
     const maxPossibleScore =
       this.initialScore + 2 * this.settings.questionCount;
 
+    // Calculate percentage score - ADD THIS
+    const percentageScore = Math.round((this.score / maxPossibleScore) * 100);
+
     // Save stats to localStorage
-    this.saveStats();
+    this.saveStats(percentageScore); // MODIFY THIS
 
     // Hide quiz controls when quiz is complete
     if (this.quizControls) {
@@ -630,7 +633,9 @@ class BaseQuiz {
     this.quizContent.innerHTML = `
         <div class="quiz-results">
           <h2>Quiz Complete!</h2>
-          <p>Your final score: ${this.score}/${maxPossibleScore}</p>
+          <p>Your final score: ${
+            this.score
+          }/${maxPossibleScore} (${percentageScore}%)</p>
           <p>Time taken: ${minutes}m ${seconds}s</p>
           <p>Region: ${
             this.settings.region === "all"
@@ -647,48 +652,34 @@ class BaseQuiz {
         </div>
       `;
 
-    // Add event listeners (safely)
-    const self = this;
-    const playAgainBtn = document.getElementById("play-again-btn");
-    if (playAgainBtn) {
-      playAgainBtn.addEventListener("click", function () {
-        self.startQuiz();
-      });
-    }
-
-    const changeSettingsBtn = document.getElementById("change-settings-btn");
-    if (changeSettingsBtn) {
-      changeSettingsBtn.addEventListener("click", function () {
-        const event = new CustomEvent("openSettings");
-        document.dispatchEvent(event);
-      });
-    }
-
-    const homeBtn = document.getElementById("home-btn");
-    if (homeBtn) {
-      homeBtn.addEventListener("click", function () {
-        document.getElementById("quiz-container").classList.add("hidden");
-        document.getElementById("welcome-section").classList.remove("hidden");
-      });
-    }
+    // Rest of your method remains the same...
   }
 
   /**
    * Save quiz stats to localStorage
    */
-  saveStats() {
+  saveStats(percentageScore) {
     const statsKey = "geoQuizStats";
     let stats = JSON.parse(localStorage.getItem(statsKey)) || {};
 
     // Initialize quiz-specific stats if not exist
     if (!stats[this.quizType]) {
-      stats[this.quizType] = { bestScore: 0, gamesPlayed: 0 };
+      stats[this.quizType] = {
+        bestScore: 0,
+        bestPercentage: 0,
+        gamesPlayed: 0,
+      };
     }
 
     // Update stats
     stats[this.quizType].gamesPlayed += 1;
     if (this.score > stats[this.quizType].bestScore) {
       stats[this.quizType].bestScore = this.score;
+    }
+
+    // Update percentage score
+    if (percentageScore > (stats[this.quizType].bestPercentage || 0)) {
+      stats[this.quizType].bestPercentage = percentageScore;
     }
 
     // Save updated stats
